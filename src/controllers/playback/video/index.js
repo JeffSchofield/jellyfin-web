@@ -233,9 +233,9 @@ import { appRouter } from '../../../components/appRouter';
                 if (
                     seconds >= tvIntro.ShowSkipPromptAt
                     && seconds <= tvIntro.IntroEnd
-                    && skipIntro.classList.contains("hide")
+                    && skipIntro.classList.contains("hidden")
                 ) {
-                    skipIntro.classList.remove("hide");
+                    skipIntro.classList.remove("hidden");
                 }
             }
         }
@@ -254,9 +254,9 @@ import { appRouter } from '../../../components/appRouter';
                 // Hide the skip intro button when OSD closes, only outside of the window where it should always be shown
                 if (
                     (seconds >= tvIntro.HideSkipPromptAt || seconds < tvIntro.ShowSkipPromptAt)
-                    && !skipIntro.classList.contains("hide")
+                    && !skipIntro.classList.contains("hidden")
                 ) {
-                    skipIntro.classList.add("hide");
+                    skipIntro.classList.add("hidden");
                 }
             }
         }
@@ -644,7 +644,7 @@ import { appRouter } from '../../../components/appRouter';
 
                         if (seconds < tvIntro.ShowSkipPromptAt || seconds > tvIntro.IntroEnd) {
                             // Always hide the button when we are outside of the intro range completely
-                            if (!skipIntro.classList.contains("hide")) skipIntro.classList.add("hide");
+                            if (!skipIntro.classList.contains("hidden")) skipIntro.classList.add("hidden");
                         } else if (
                             (
                                 seconds >= tvIntro.ShowSkipPromptAt
@@ -653,10 +653,10 @@ import { appRouter } from '../../../components/appRouter';
                             || osdShown
                         ) {
                             // Otherwise, when we are between the show/hide range, always show, or do nothing
-                            if (skipIntro.classList.contains("hide")) skipIntro.classList.remove("hide");
+                            if (skipIntro.classList.contains("hidden")) skipIntro.classList.remove("hidden");
                         } else if (!osdShown) {
                             // If we are here, then the on screen display is hidden
-                            if (!skipIntro.classList.contains("hide")) skipIntro.classList.add("hide");
+                            if (!skipIntro.classList.contains("hidden")) skipIntro.classList.add("hidden");
                         }
                     }
                 }
