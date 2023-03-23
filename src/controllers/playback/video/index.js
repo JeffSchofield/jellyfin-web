@@ -216,17 +216,49 @@ import { appRouter } from '../../../components/appRouter';
         }
 
         let mouseIsDown = false;
+        let osdShown = false;
 
         function showOsd() {
             slideDownToShow(headerElement);
             showMainOsdControls();
             resetIdle();
+            osdShown = true;
+
+            if (tvIntro?.Valid) {
+                const player = currentPlayer;
+                const seconds = playbackManager.currentTime(player) / 1000;
+                const skipIntro = document.querySelector(".skipIntro");
+
+                // Show the skip intro button when the OSD is shown, only during the intro period
+                if (
+                    seconds >= tvIntro.ShowSkipPromptAt
+                    && seconds <= tvIntro.IntroEnd
+                    && skipIntro.classList.contains("hide")
+                ) {
+                    skipIntro.classList.remove("hide");
+                }
+            }
         }
 
         function hideOsd() {
             slideUpToHide(headerElement);
             hideMainOsdControls();
             mouseManager.hideCursor();
+            osdShown = false;
+
+            if (tvIntro?.Valid) {
+                const player = currentPlayer;
+                const seconds = playbackManager.currentTime(player) / 1000;
+                const skipIntro = document.querySelector(".skipIntro");
+
+                // Hide the skip intro button when OSD closes, only outside of the window where it should always be shown
+                if (
+                    (seconds >= tvIntro.HideSkipPromptAt || seconds < tvIntro.ShowSkipPromptAt)
+                    && !skipIntro.classList.contains("hide")
+                ) {
+                    skipIntro.classList.add("hide");
+                }
+            }
         }
 
         function toggleOsd() {
@@ -606,20 +638,27 @@ import { appRouter } from '../../../components/appRouter';
                     showComingUpNextIfNeeded(player, item, currentTime, currentRuntimeTicks);
 
                     // Check if an introduction sequence was detected for this item.
-                    if (!tvIntro?.Valid) {
-                        return;
+                    if (tvIntro?.Valid) {
+                        const seconds = playbackManager.currentTime(player) / 1000;
+                        const skipIntro = document.querySelector(".skipIntro");
+
+                        if (seconds < tvIntro.ShowSkipPromptAt || seconds > tvIntro.IntroEnd) {
+                            // Always hide the button when we are outside of the intro range completely
+                            if (!skipIntro.classList.contains("hide")) skipIntro.classList.add("hide");
+                        } else if (
+                            (
+                                seconds >= tvIntro.ShowSkipPromptAt
+                                && seconds < tvIntro.HideSkipPromptAt
+                            )
+                            || osdShown
+                        ) {
+                            // Otherwise, when we are between the show/hide range, always show, or do nothing
+                            if (skipIntro.classList.contains("hide")) skipIntro.classList.remove("hide");
+                        } else if (!osdShown) {
+                            // If we are here, then the on screen display is hidden
+                            if (!skipIntro.classList.contains("hide")) skipIntro.classList.add("hide");
+                        }
                     }
-
-                    const seconds = playbackManager.currentTime(player) / 1000;
-                    const skipIntro = document.querySelector(".skipIntro");
-
-                    // If the skip prompt should be shown, show it.
-                    if (seconds >= tvIntro.ShowSkipPromptAt && seconds < tvIntro.HideSkipPromptAt) {
-                        skipIntro.classList.remove("hide");
-                        return;
-                    }
-
-                    skipIntro.classList.add("hide");
                 }
             }
         }
