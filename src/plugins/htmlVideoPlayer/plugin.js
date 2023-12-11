@@ -1,3 +1,5 @@
+import DOMPurify from 'dompurify';
+
 import browser from '../../scripts/browser';
 import { Events } from 'jellyfin-apiclient';
 import { appHost } from '../../components/apphost';
@@ -365,7 +367,7 @@ function tryRemoveElement(elem) {
 
             this.#currentTime = null;
 
-            this.resetSubtitleOffset();
+            if (options.resetSubtitleOffset !== false) this.resetSubtitleOffset();
 
             return this.createMediaElement(options).then(elem => {
                 return this.updateVideoUrl(options).then(() => {
@@ -1317,7 +1319,8 @@ function tryRemoveElement(elem) {
                 }
 
                 if (selectedTrackEvent && selectedTrackEvent.Text) {
-                    subtitleTextElement.innerHTML = normalizeTrackEventText(selectedTrackEvent.Text, true);
+                    subtitleTextElement.innerHTML = DOMPurify.sanitize(
+                        normalizeTrackEventText(selectedTrackEvent.Text, true));
                     subtitleTextElement.classList.remove('hide');
                 } else {
                     subtitleTextElement.classList.add('hide');

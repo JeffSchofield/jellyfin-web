@@ -130,7 +130,7 @@ import browser from './browser';
 
             typeString = 'audio/ogg; codecs="opus"';
         } else if (format === 'alac') {
-            if (browser.iOS || browser.osx) {
+            if (browser.iOS || browser.osx && browser.safari) {
                 return true;
             }
         } else if (format === 'mp2') {
@@ -497,7 +497,8 @@ export function canPlaySecondaryAudio(videoTestElement) {
             }
         }
 
-        if (canPlayAudioFormat('flac')) {
+        // FLAC audio in video plays with a delay on Tizen
+        if (canPlayAudioFormat('flac') && !browser.tizen) {
             videoAudioCodecs.push('flac');
             hlsInFmp4VideoAudioCodecs.push('flac');
         }
@@ -689,30 +690,6 @@ export function canPlaySecondaryAudio(videoTestElement) {
             });
         });
 
-        if (canPlayMkv && !browser.tizen && options.enableMkvProgressive !== false) {
-            profile.TranscodingProfiles.push({
-                Container: 'mkv',
-                Type: 'Video',
-                AudioCodec: videoAudioCodecs.join(','),
-                VideoCodec: mp4VideoCodecs.join(','),
-                Context: 'Streaming',
-                MaxAudioChannels: physicalAudioChannels.toString(),
-                CopyTimestamps: true
-            });
-        }
-
-        if (canPlayMkv) {
-            profile.TranscodingProfiles.push({
-                Container: 'mkv',
-                Type: 'Video',
-                AudioCodec: videoAudioCodecs.join(','),
-                VideoCodec: mp4VideoCodecs.join(','),
-                Context: 'Static',
-                MaxAudioChannels: physicalAudioChannels.toString(),
-                CopyTimestamps: true
-            });
-        }
-
         if (canPlayHls() && options.enableHls !== false) {
             if (hlsInFmp4VideoCodecs.length && hlsInFmp4VideoAudioCodecs.length && userSettings.preferFmp4HlsContainer() && (browser.safari || browser.tizen || browser.web0s)) {
                 profile.TranscodingProfiles.push({
@@ -742,28 +719,6 @@ export function canPlaySecondaryAudio(videoTestElement) {
                 });
             }
         }
-
-        // Progressive mp4 transcoding
-        if (mp4VideoCodecs.length && videoAudioCodecs.length) {
-            profile.TranscodingProfiles.push({
-                Container: 'mp4',
-                Type: 'Video',
-                AudioCodec: videoAudioCodecs.join(','),
-                VideoCodec: mp4VideoCodecs.join(','),
-                Context: 'Streaming',
-                Protocol: 'http',
-                MaxAudioChannels: physicalAudioChannels.toString()
-            });
-        }
-
-        profile.TranscodingProfiles.push({
-            Container: 'mp4',
-            Type: 'Video',
-            AudioCodec: videoAudioCodecs.join(','),
-            VideoCodec: 'h264',
-            Context: 'Static',
-            Protocol: 'http'
-        });
 
         profile.ContainerProfiles = [];
 
@@ -828,10 +783,9 @@ export function canPlaySecondaryAudio(videoTestElement) {
             maxH264Level = 52;
         }
 
-        if (browser.tizen ||
-            videoTestElement.canPlayType('video/mp4; codecs="avc1.6e0033"').replace(/no/, '')) {
+        if (videoTestElement.canPlayType('video/mp4; codecs="avc1.6e0033"').replace(/no/, '')) {
             // These tests are passing in safari, but playback is failing
-            if (!browser.safari && !browser.iOS && !browser.web0s && !browser.edge && !browser.mobile) {
+            if (!browser.safari && !browser.iOS && !browser.web0s && !browser.edge && !browser.mobile && !browser.tizen) {
                 h264Profiles += '|high 10';
             }
         }
@@ -879,7 +833,8 @@ export function canPlaySecondaryAudio(videoTestElement) {
         }
 
         if (browser.tizen || browser.web0s) {
-            hevcVideoRangeTypes += '|HDR10|HLG|DOVI';
+            hevcVideoRangeTypes += '|HDR10|HLG';
+            if (browser.web0s) hevcVideoRangeTypes += '|DOVI';
             vp9VideoRangeTypes += '|HDR10|HLG';
             av1VideoRangeTypes += '|HDR10|HLG';
         }
